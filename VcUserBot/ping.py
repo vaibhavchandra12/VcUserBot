@@ -12,10 +12,10 @@ from config import HNDLR, SUDO_USERS
 START_TIME = datetime.utcnow()
 TIME_DURATION_UNITS = (
     ('Week', 60 * 60 * 24 * 7),
-    ('Day', 60 * 60 * 24),
-    ('Hour', 60 * 60),
+    ('Day', 60 ** 2 * 24),
+    ('Hour', 60 ** 2),
     ('Min', 60),
-    ('Sec', 1)
+    ('Sec', 1),
 )
 
 async def _human_time_duration(seconds):

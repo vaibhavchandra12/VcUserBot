@@ -63,7 +63,7 @@ async def song(client, message: Message):
         with YoutubeDL(opts) as ytdl:
             ytdl_data = ytdl.extract_info(mo, download=True)
     except Exception as e:
-        await pablo.edit(f"**Failed To Download** \n**Error :** `{str(e)}`")
+        await pablo.edit(f'**Failed To Download** \n**Error :** `{e}`')
         return
     c_time = time.time()
     capy = f"""
@@ -130,9 +130,10 @@ async def progress(current, total, message, start, type_of_ps, file_name=None):
         estimated_total_time = elapsed_time + time_to_completion
         progress_str = "{0}{1} {2}%\n".format(
             "".join("🗂️" for i in range(math.floor(percentage / 10))),
-            "".join("🔘" for i in range(10 - math.floor(percentage / 10))),
+            "".join("🔘" for _ in range(10 - math.floor(percentage / 10))),
             round(percentage, 2),
         )
+
 
         tmp = progress_str + "{0} of {1}\nETA: {2}".format(
             humanbytes(current), humanbytes(total), time_formatter(estimated_total_time)
@@ -271,7 +272,7 @@ async def vsong(client, message: Message):
         with YoutubeDL(opts) as ytdl:
             ytdl_data = ytdl.extract_info(url, download=True)
     except Exception as e:
-        await event.edit(event, f"**Download Failed** \n**Error :** `{str(e)}`")
+        await event.edit(event, f'**Download Failed** \n**Error :** `{e}`')
         return
     c_time = time.time()
     file_stark = f"{ytdl_data['id']}.mp4"

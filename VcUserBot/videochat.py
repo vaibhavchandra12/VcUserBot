@@ -31,10 +31,7 @@ def ytsearch(query):
         search = VideosSearch(query, limit=1)
         for r in search.result()["result"]:
             ytid = r["id"]
-            if len(r["title"]) > 34:
-                songname = r["title"][:35] + "..."
-            else:
-                songname = r["title"]
+            songname = r["title"][:35] + "..." if len(r["title"]) > 34 else r["title"]
             url = f"https://www.youtube.com/watch?v={ytid}"
         return [songname, url]
     except Exception as e:
@@ -66,10 +63,7 @@ def ytsearch(query):
         search = VideosSearch(query, limit=1)
         for r in search.result()["result"]:
             ytid = r["id"]
-            if len(r["title"]) > 34:
-                songname = r["title"][:35] + "..."
-            else:
-                songname = r["title"]
+            songname = r["title"][:35] + "..." if len(r["title"]) > 34 else r["title"]
             url = f"https://www.youtube.com/watch?v={ytid}"
         return [songname, url]
     except Exception as e:
@@ -97,10 +91,9 @@ async def ytdl(link):
 
 @Client.on_message(filters.command(["play"], prefixes=f"{HNDLR}") & filters.user(SUDO_USERS))
 async def play(client, m: Message):
-    replied = m.reply_to_message
     chat_id = m.chat.id
     m.chat.title
-    if replied:
+    if replied := m.reply_to_message:
         if replied.audio or replied.voice:
             await m.delete()
             huehue = await replied.reply("**🗃️Processing**")
@@ -147,67 +140,64 @@ async def play(client, m: Message):
 """,
                 )
 
+    elif len(m.command) < 2:
+        await m.reply("😐Reply to Audio File or give something for Search")
     else:
-        if len(m.command) < 2:
-            await m.reply("😐Reply to Audio File or give something for Search")
+        await m.delete()
+        huehue = await m.reply("🔎 Searching..")
+        query = m.text.split(None, 1)[1]
+        search = ytsearch(query)
+        if search == 0:
+            await huehue.edit("`⚠️Found Nothing for the Given Query`")
         else:
-            await m.delete()
-            huehue = await m.reply("🔎 Searching..")
-            query = m.text.split(None, 1)[1]
-            search = ytsearch(query)
-            if search == 0:
-                await huehue.edit("`⚠️Found Nothing for the Given Query`")
-            else:
-                songname = search[0]
-                url = search[1]
-                hm, ytlink = await ytdl(url)
-                if hm == 0:
-                    await huehue.edit(f"**YTDL ERROR ⚠️** \n\n`{ytlink}`")
-                else:
-                    if chat_id in QUEUE:
-                        pos = add_to_queue(chat_id, songname, ytlink, url, "Audio", 0)
-                        await huehue.delete()
-                        # await m.reply_to_message.delete()
-                        await m.reply_photo(
-                            photo=f"{IMAGE_THUMBNAIL}",
-                            caption=f"""
+            songname = search[0]
+            url = search[1]
+            hm, ytlink = await ytdl(url)
+            if hm == 0:
+                await huehue.edit(f"**YTDL ERROR ⚠️** \n\n`{ytlink}`")
+            elif chat_id in QUEUE:
+                pos = add_to_queue(chat_id, songname, ytlink, url, "Audio", 0)
+                await huehue.delete()
+                # await m.reply_to_message.delete()
+                await m.reply_photo(
+                    photo=f"{IMAGE_THUMBNAIL}",
+                    caption=f"""
 **#⃣ Song added▪️Position {pos}
 🏷️ Name: {songname}
 💬 Chat ID: {chat_id}
 🎧 Requested by: {m.from_user.mention}**
 """,
-                        )
-                    else:
-                        try:
-                            await call_py.join_group_call(
-                                chat_id,
-                                AudioPiped(
-                                    ytlink,
-                                ),
-                                stream_type=StreamType().pulse_stream,
-                            )
-                            add_to_queue(chat_id, songname, ytlink, url, "Audio", 0)
-                            await huehue.delete()
-                            # await m.reply_to_message.delete()
-                            await m.reply_photo(
-                                photo=f"{IMAGE_THUMBNAIL}",
-                                caption=f"""
+                )
+            else:
+                try:
+                    await call_py.join_group_call(
+                        chat_id,
+                        AudioPiped(
+                            ytlink,
+                        ),
+                        stream_type=StreamType().pulse_stream,
+                    )
+                    add_to_queue(chat_id, songname, ytlink, url, "Audio", 0)
+                    await huehue.delete()
+                    # await m.reply_to_message.delete()
+                    await m.reply_photo(
+                        photo=f"{IMAGE_THUMBNAIL}",
+                        caption=f"""
 **▶ Start Playing Song
 🏷️ Name: {songname}
 💬 Chat ID: {chat_id}
 🎧 Requested by: {m.from_user.mention}**
 """,
-                            )
-                        except Exception as ep:
-                            await huehue.edit(f"`{ep}`")
+                    )
+                except Exception as ep:
+                    await huehue.edit(f"`{ep}`")
 
 
 @Client.on_message(filters.command(["vplay"], prefixes=f"{HNDLR}") & filters.user(SUDO_USERS))
 async def vplay(client, m: Message):
-    replied = m.reply_to_message
     chat_id = m.chat.id
     m.chat.title
-    if replied:
+    if replied := m.reply_to_message:
         if replied.video or replied.document:
             await m.delete()
             huehue = await replied.reply("**🗃️ Processing**")
@@ -217,14 +207,7 @@ async def vplay(client, m: Message):
                 Q = 720
             else:
                 pq = m.text.split(None, 1)[1]
-                if pq == "720" or "480" or "360":
-                    Q = int(pq)
-                else:
-                    Q = 720
-                    await huehue.edit(
-                        "`Only 720, 480, 360 Allowed` \n`Now Stream in 720p`"
-                    )
-
+                Q = int(pq)
             if replied.video:
                 songname = replied.video.file_name[:35] + "..."
             elif replied.document:
@@ -244,12 +227,12 @@ async def vplay(client, m: Message):
 """,
                 )
             else:
-                if Q == 720:
-                    hmmm = HighQualityVideo()
+                if Q == 360:
+                    hmmm = LowQualityVideo()
                 elif Q == 480:
                     hmmm = MediumQualityVideo()
-                elif Q == 360:
-                    hmmm = LowQualityVideo()
+                elif Q == 720:
+                    hmmm = HighQualityVideo()
                 await call_py.join_group_call(
                     chat_id,
                     AudioVideoPiped(dl, HighQualityAudio(), hmmm),
@@ -268,61 +251,59 @@ async def vplay(client, m: Message):
 """,
                 )
 
+    elif len(m.command) < 2:
+        await m.reply("**Reply to Video File or give something for Search**")
     else:
-        if len(m.command) < 2:
-            await m.reply("**Reply to Video File or give something for Search**")
+        await m.delete()
+        huehue = await m.reply("**🔎 Searching")
+        query = m.text.split(None, 1)[1]
+        search = ytsearch(query)
+        Q = 720
+        hmmm = HighQualityVideo()
+        if search == 0:
+            await huehue.edit(
+                "**Tidak Menemukan Apa pun untuk Kueri yang Diberikan**"
+            )
         else:
-            await m.delete()
-            huehue = await m.reply("**🔎 Searching")
-            query = m.text.split(None, 1)[1]
-            search = ytsearch(query)
-            Q = 720
-            hmmm = HighQualityVideo()
-            if search == 0:
-                await huehue.edit(
-                    "**Tidak Menemukan Apa pun untuk Kueri yang Diberikan**"
-                )
-            else:
-                songname = search[0]
-                url = search[1]
-                hm, ytlink = await ytdl(url)
-                if hm == 0:
-                    await huehue.edit(f"**YTDL ERROR ⚠️** \n\n`{ytlink}`")
-                else:
-                    if chat_id in QUEUE:
-                        pos = add_to_queue(chat_id, songname, ytlink, url, "Video", Q)
-                        await huehue.delete()
-                        # await m.reply_to_message.delete()
-                        await m.reply_photo(
-                            photo=f"{IMAGE_THUMBNAIL}",
-                            caption=f"""
+            songname = search[0]
+            url = search[1]
+            hm, ytlink = await ytdl(url)
+            if hm == 0:
+                await huehue.edit(f"**YTDL ERROR ⚠️** \n\n`{ytlink}`")
+            elif chat_id in QUEUE:
+                pos = add_to_queue(chat_id, songname, ytlink, url, "Video", Q)
+                await huehue.delete()
+                # await m.reply_to_message.delete()
+                await m.reply_photo(
+                    photo=f"{IMAGE_THUMBNAIL}",
+                    caption=f"""
 **#⃣ Vedio added▪️Position {pos}
 🏷️ Name: {songname}
 💬 Chat ID: {chat_id}
 🎬 Requested by: {m.from_user.mention}**
 """,
-                        )
-                    else:
-                        try:
-                            await call_py.join_group_call(
-                                chat_id,
-                                AudioVideoPiped(ytlink, HighQualityAudio(), hmmm),
-                                stream_type=StreamType().pulse_stream,
-                            )
-                            add_to_queue(chat_id, songname, ytlink, url, "Video", Q)
-                            await huehue.delete()
-                            # await m.reply_to_message.delete()
-                            await m.reply_photo(
-                                photo=f"{IMAGE_THUMBNAIL}",
-                                caption=f"""
+                )
+            else:
+                try:
+                    await call_py.join_group_call(
+                        chat_id,
+                        AudioVideoPiped(ytlink, HighQualityAudio(), hmmm),
+                        stream_type=StreamType().pulse_stream,
+                    )
+                    add_to_queue(chat_id, songname, ytlink, url, "Video", Q)
+                    await huehue.delete()
+                    # await m.reply_to_message.delete()
+                    await m.reply_photo(
+                        photo=f"{IMAGE_THUMBNAIL}",
+                        caption=f"""
 **▶ Start Playing Video
 🏷️ Name: {songname}
 💬 Chat ID: {chat_id}
 🎬 Requested by: {m.from_user.mention}**
 """,
-                            )
-                        except Exception as ep:
-                            await huehue.edit(f"`{ep}`")
+                    )
+                except Exception as ep:
+                    await huehue.edit(f"`{ep}`")
 
 
 @Client.on_message(filters.command(["playfrom"], prefixes=f"{HNDLR}") & filters.user(SUDO_USERS))
